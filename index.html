@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הזמנה לחתונה - נועה ורפאל</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h2 class="title">הזמנה לחתונה</h2>
+    <h1>נועה & רפאל</h1>
+    <p>מתכבדים להזמינכם</p>
+    <p class="date">יום שלישי, כ׳ באייר תשפ״ה</p>
+    <p class="date">20.05.2025</p>
+
+    <div class="container">
+        <form id="rsvpForm" name="rsvpForm">
+            <label>שם</label>
+            <input type="text" id="guestName" name="Guest Name" disabled>
+
+            <label>מספר אורחים</label>
+            <input type="number" id="guestsCount" name="Number of Guests" min="1" max="10" required>
+
+            <input type="hidden" id="guestID" name="ID">
+            <input type="hidden" id="responseStatus" name="Response Status">
+
+            <button type="submit">אישור הגעה</button>
+        </form>
+    </div>
+
+    <p>נשמח לראותכם בשמחתנו!</p>
+
+    <script>
+       const scriptURL = "https://script.google.com/macros/s/AKfycbwbjzobcAcETVirhBvk9oXas19WV-nP_6LAYwtCXhBDwyur4W-szEDYfTk46mcMLdyqog/exec"; // Replace with your new Web App URL
+    const form = document.forms["rsvpForm"];
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Get values from input fields
+        const urlParams = new URLSearchParams(window.location.search);
+        const guestID = urlParams.get("id") || "Unknown";
+        document.getElementById("guestID").value = guestID;
+        document.getElementById("responseStatus").value = "מגיע"; // Default status
+
+        fetch(scriptURL, { 
+            method: "POST", 
+            body: new FormData(form)
+        })
+        .then(response => response.text())  // Convert response to text
+        .then(data => {
+            console.log("✅ Server Response:", data);
+            if (data.includes("Success")) {
+                alert("✅ אישור ההגעה נקלט בהצלחה!");
+                window.location.href = "confirmation.html?status=" + encodeURIComponent("הבחירה התעדכנה במערכת");
+            } else {
+                console.error("❌ Google Apps Script Error:", data);
+                alert("❌ שגיאה בשליחת האישור: " + data);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Failed to submit response:", error);
+            alert("❌ Failed to submit response. Please try again.");
+        });
+    });
+
+    async function fetchGuestName() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashedId = urlParams.get('id');
+
+        if (hashedId) {
+            try {
+                console.log('Fetching guest name for ID:', hashedId);
+                let script = document.createElement('script');
+                script.src = 'https://script.google.com/macros/s/AKfycbzxwJjhZuuvUlhIxXvmQjK4EB-JqVdVw8mYjo3KCR-jlyhCtd4wsILBn08G5zIv8yGF/exec?id=' + hashedId; // Replace with your guest name script URL
+                document.body.appendChild(script);
+            } catch (error) {
+                console.error('Error fetching guest name:', error);
+                document.getElementById('guestName').value = 'אורח לא מזוהה';
+            }
+        } else {
+            console.warn('No ID found in URL');
+            document.getElementById('guestName').value = 'אורח לא מזוהה';
+        }
+    }
+
+    function handleGuestResponse(data) {
+        console.log('API Response:', data);
+        document.getElementById('guestName').value = data.guestName || 'אורח לא מזוהה';
+    }
+
+    window.onload = fetchGuestName;
+    </script>
+</body>
+</html>
